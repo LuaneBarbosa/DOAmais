@@ -1024,8 +1024,8 @@
                 <input type="date" id="nascimento" required>
 
                 <label for="telefone">Telefone</label>
-                <input type="tel" id="telefone"
-                       placeholder="Digite seu telefone fictício" required>
+                <input type="tel" id="telefone" maxlength="15" inputmode="numeric"
+                        placeholder="(00) 00000-0000" autocomplete="tel" required>
 
                 <label for="email">E-mail</label>
                 <input type="email" id="email"
@@ -1089,7 +1089,7 @@
             <p class="aviso-demo">Demonstração acadêmica: nenhum código será enviado de verdade. Utilize somente telefone fictício.</p>
             <form id="formTelefoneRecuperacao">
                 <label for="telefoneRecuperacao">Telefone</label>
-                <input type="tel" id="telefoneRecuperacao" placeholder="(00) 00000-0000" inputmode="tel" required>
+                <input type="tel" id="telefoneRecuperacao" maxlength="15" placeholder="(00) 00000-0000" inputmode="numeric" autocomplete="tel" required>
                 <div class="recuperacao-acoes">
                     <button type="button" class="botao" onclick="solicitarCodigoRecuperacao('WhatsApp')">Solicitar código pelo WhatsApp</button>
                     <button type="button" class="botao botao-secundario" onclick="solicitarCodigoRecuperacao('SMS')">Solicitar código por SMS</button>
@@ -2000,6 +2000,33 @@
         aplicarMascaraCPF(document.getElementById("cpf"));
         aplicarMascaraCPF(document.getElementById("cpfCadastro"));
 
+        function normalizarTelefone(valor) {
+            return String(valor || "").replace(/\D/g, "").slice(0, 11);
+        }
+
+        function formatarTelefone(valor) {
+            const numeros = normalizarTelefone(valor);
+            if (!numeros) return "";
+            if (numeros.length <= 2) return numeros.length === 2 ? "(" + numeros + ")" : numeros;
+            const ddd = numeros.slice(0, 2);
+            const restante = numeros.slice(2);
+            if (numeros.length <= 6) return "(" + ddd + ") " + restante;
+            if (numeros.length <= 10) {
+                return "(" + ddd + ") " + restante.slice(0, 4) + (restante.length > 4 ? "-" + restante.slice(4, 8) : "");
+            }
+            return "(" + ddd + ") " + restante.slice(0, 5) + (restante.length > 5 ? "-" + restante.slice(5, 9) : "");
+        }
+
+        function aplicarMascaraTelefone(elemento) {
+            if (!elemento) return;
+            elemento.addEventListener("input", function() {
+                elemento.value = formatarTelefone(elemento.value);
+            });
+        }
+
+        aplicarMascaraTelefone(document.getElementById("telefone"));
+        aplicarMascaraTelefone(document.getElementById("telefoneRecuperacao"));
+
         function senhaAtendeRequisitos(senha) {
             return senha.length >= 8 &&
                 /[A-Z]/.test(senha) &&
@@ -2168,7 +2195,8 @@
             const cpfDigitado = document.getElementById("cpfCadastro").value.trim();
             const cpf = normalizarCPF(cpfDigitado);
             const nascimento = document.getElementById("nascimento").value;
-            const telefone = document.getElementById("telefone").value.trim();
+            const telefone = formatarTelefone(document.getElementById("telefone").value);
+            const telefoneNumeros = normalizarTelefone(telefone);
             const email = document.getElementById("email").value.trim();
             const genero = document.getElementById("genero").value;
             const tipoSanguineo = document.getElementById("tipoSanguineo").value;
@@ -2182,6 +2210,11 @@
 
             if (cpf.length !== 11) {
                 mostrarMensagem("mensagemCadastro", "Digite um CPF fictício com 11 números.");
+                return;
+            }
+
+            if (telefoneNumeros.length !== 10 && telefoneNumeros.length !== 11) {
+                mostrarMensagem("mensagemCadastro", "Digite um telefone fictício válido com DDD (10 ou 11 números).");
                 return;
             }
 
@@ -2273,9 +2306,9 @@
 
         function solicitarCodigoRecuperacao(metodo) {
             limparMensagem("mensagemTelefoneRecuperacao");
-            const telefone = document.getElementById("telefoneRecuperacao").value.replace(/\D/g, "");
-            if (telefone.length < 10) {
-                mostrarMensagem("mensagemTelefoneRecuperacao", "Digite um telefone fictício com DDD.");
+            const telefone = normalizarTelefone(document.getElementById("telefoneRecuperacao").value);
+            if (telefone.length !== 10 && telefone.length !== 11) {
+                mostrarMensagem("mensagemTelefoneRecuperacao", "Digite um telefone fictício válido com DDD (10 ou 11 números).");
                 return;
             }
             const conta = obterUsuarios().find(function(usuario) {
