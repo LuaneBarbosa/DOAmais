@@ -914,6 +914,52 @@
             html[data-tema="sistema"] .contador-cancelado { background:#4b252d; color:#ffc0c8; }
         }
 
+
+        .requisitos-senha {
+            display:grid;
+            gap:6px;
+            margin:0 0 12px;
+            padding:12px 14px;
+            border:1px solid var(--borda);
+            border-radius:10px;
+            background:var(--rosa-claro);
+            color:var(--texto-suave);
+            font-size:12px;
+            line-height:1.45;
+        }
+        .requisitos-senha strong { color:var(--texto); }
+        .requisitos-senha span::first-letter { color:var(--critico); }
+        .requisitos-senha span.ok { color:var(--verde); font-weight:bold; }
+        .requisitos-senha span.ok::first-letter { color:var(--verde); }
+        .codigo-grade {
+            display:grid;
+            grid-template-columns:repeat(6,minmax(0,1fr));
+            gap:8px;
+            margin:8px 0 16px;
+        }
+        .codigo-grade input {
+            min-width:0;
+            height:54px;
+            padding:5px !important;
+            margin:0 !important;
+            text-align:center;
+            font-size:23px;
+            font-weight:bold;
+        }
+        .recuperacao-acoes { display:grid; gap:10px; margin:8px 0 14px; }
+        .recuperacao-acoes .botao { width:100%; }
+        #paginaAgendar #formAgendamento { margin-bottom:18px; }
+        #paginaAgendar > .cartao > a.botao { margin-top:8px; }
+        .painel-remarcacao {
+            margin-top:14px;
+            padding:14px;
+            border:1px solid var(--borda);
+            border-radius:10px;
+            background:var(--rosa-claro);
+        }
+        .painel-remarcacao label { margin-top:8px; }
+        .painel-remarcacao .botao { margin-top:8px; }
+
     </style>
 </head>
 
@@ -933,8 +979,8 @@
 
             <form id="formLogin">
                 <label for="cpf">CPF</label>
-                <input type="text" id="cpf" name="cpf"
-                       placeholder="Digite seu CPF" autocomplete="off" required>
+                <input type="text" id="cpf" name="cpf" maxlength="14"
+                       placeholder="000.000.000-00" autocomplete="off" inputmode="numeric" required>
 
                 <label for="senha">Senha</label>
                 <input type="password" id="senha" name="senha"
@@ -942,6 +988,9 @@
 
                 <button type="submit" class="botao">Entrar</button>
             </form>
+            <p style="text-align:right;margin:4px 0 16px">
+                <button type="button" class="link-acao" style="border:0;background:none;cursor:pointer" onclick="mostrarRecuperacaoSenha()">Esqueceu a senha?</button>
+            </p>
 
             <p>Ainda não tem conta?</p>
             <button type="button" class="botao" onclick="mostrarCadastro()">
@@ -967,8 +1016,8 @@
                 <input type="text" id="nome" placeholder="Digite seu nome" required>
 
                 <label for="cpfCadastro">CPF</label>
-                <input type="text" id="cpfCadastro"
-                       placeholder="Digite seu CPF fictício"
+                <input type="text" id="cpfCadastro" maxlength="14"
+                       placeholder="000.000.000-00"
                        autocomplete="off" inputmode="numeric" required>
 
                 <label for="nascimento">Data de nascimento</label>
@@ -1008,6 +1057,14 @@
                 <label for="senhaCadastro">Criar senha</label>
                 <input type="password" id="senhaCadastro"
                        placeholder="Crie uma senha" minlength="8" required>
+                <div class="requisitos-senha" id="requisitosCadastro">
+                    <strong>A senha precisa conter:</strong>
+                    <span data-regra="tamanho">○ No mínimo 8 caracteres</span>
+                    <span data-regra="maiuscula">○ 1 letra maiúscula</span>
+                    <span data-regra="minuscula">○ 1 letra minúscula</span>
+                    <span data-regra="numero">○ 1 número</span>
+                    <span data-regra="especial">○ 1 caractere especial</span>
+                </div>
 
                 <label for="confirmarSenha">Confirmar senha</label>
                 <input type="password" id="confirmarSenha"
@@ -1022,6 +1079,67 @@
             </button>
 
             <div id="mensagemCadastro" class="mensagem oculto" role="status"></div>
+        </section>
+
+        <!-- RECUPERAÇÃO DE SENHA: SIMULAÇÃO ACADÊMICA -->
+        <section class="login oculto" id="recuperacaoTelefone">
+            <div class="coracao">🔐</div>
+            <h2>Esqueceu a senha?</h2>
+            <p>Informe um telefone fictício cadastrado na sua conta e escolha como deseja simular o recebimento do código.</p>
+            <p class="aviso-demo">Demonstração acadêmica: nenhum código será enviado de verdade. Utilize somente telefone fictício.</p>
+            <form id="formTelefoneRecuperacao">
+                <label for="telefoneRecuperacao">Telefone</label>
+                <input type="tel" id="telefoneRecuperacao" placeholder="(00) 00000-0000" inputmode="tel" required>
+                <div class="recuperacao-acoes">
+                    <button type="button" class="botao" onclick="solicitarCodigoRecuperacao('WhatsApp')">Solicitar código pelo WhatsApp</button>
+                    <button type="button" class="botao botao-secundario" onclick="solicitarCodigoRecuperacao('SMS')">Solicitar código por SMS</button>
+                </div>
+            </form>
+            <div id="mensagemTelefoneRecuperacao" class="mensagem oculto" role="status"></div>
+            <button type="button" class="botao botao-secundario" onclick="voltarParaLoginRecuperacao()">Voltar para o login</button>
+        </section>
+
+        <section class="login oculto" id="recuperacaoCodigo">
+            <div class="coracao">📲</div>
+            <h2>Digite o código</h2>
+            <p id="textoMetodoCodigo">Insira o código de seis dígitos.</p>
+            <p class="aviso-demo">Atenção: este é um código fictício. Como não existe envio real por WhatsApp ou SMS, digite quaisquer seis números para continuar.</p>
+            <form id="formCodigoRecuperacao">
+                <label>Código de 6 dígitos</label>
+                <div class="codigo-grade" aria-label="Código fictício de seis dígitos">
+                    <input class="codigo-digito" inputmode="numeric" maxlength="1" aria-label="Primeiro dígito" required>
+                    <input class="codigo-digito" inputmode="numeric" maxlength="1" aria-label="Segundo dígito" required>
+                    <input class="codigo-digito" inputmode="numeric" maxlength="1" aria-label="Terceiro dígito" required>
+                    <input class="codigo-digito" inputmode="numeric" maxlength="1" aria-label="Quarto dígito" required>
+                    <input class="codigo-digito" inputmode="numeric" maxlength="1" aria-label="Quinto dígito" required>
+                    <input class="codigo-digito" inputmode="numeric" maxlength="1" aria-label="Sexto dígito" required>
+                </div>
+                <button type="submit" class="botao">Confirmar código</button>
+            </form>
+            <div id="mensagemCodigoRecuperacao" class="mensagem oculto" role="status"></div>
+            <button type="button" class="botao botao-secundario" onclick="voltarParaLoginRecuperacao()">Cancelar</button>
+        </section>
+
+        <section class="login oculto" id="recuperacaoNovaSenha">
+            <div class="coracao">🔑</div>
+            <h2>Cadastre uma nova senha</h2>
+            <p>Crie uma nova senha para acessar sua conta.</p>
+            <form id="formNovaSenhaRecuperacao">
+                <label for="novaSenhaRecuperacao">Nova senha</label>
+                <input type="password" id="novaSenhaRecuperacao" minlength="8" placeholder="Digite a nova senha" required>
+                <div class="requisitos-senha" id="requisitosRecuperacao">
+                    <strong>A nova senha precisa conter:</strong>
+                    <span data-regra="tamanho">○ No mínimo 8 caracteres</span>
+                    <span data-regra="maiuscula">○ 1 letra maiúscula</span>
+                    <span data-regra="minuscula">○ 1 letra minúscula</span>
+                    <span data-regra="numero">○ 1 número</span>
+                    <span data-regra="especial">○ 1 caractere especial</span>
+                </div>
+                <label for="confirmarNovaSenhaRecuperacao">Confirmar nova senha</label>
+                <input type="password" id="confirmarNovaSenhaRecuperacao" minlength="8" placeholder="Digite novamente a nova senha" required>
+                <button type="submit" class="botao">Salvar nova senha</button>
+            </form>
+            <div id="mensagemNovaSenhaRecuperacao" class="mensagem oculto" role="status"></div>
         </section>
     </main>
 
@@ -1132,22 +1250,22 @@
                         <article class="tipo-sangue">
                             <div class="tipo-topo">
                                 <strong>O+</strong>
-                                <span class="tipo-status" style="color:var(--critico)"><span class="ponto vermelho"></span> Crítico</span>
+                                <span class="tipo-status" style="color:var(--verde)"><span class="ponto verde"></span> Estável</span>
                             </div>
-                            <div class="barra-fundo"><div class="barra barra-critica"></div></div>
+                            <div class="barra-fundo"><div class="barra barra-estavel"></div></div>
                         </article>
 
                         <article class="tipo-sangue">
                             <div class="tipo-topo">
                                 <strong>O−</strong>
-                                <span class="tipo-status" style="color:var(--verde)"><span class="ponto verde"></span> Estável</span>
+                                <span class="tipo-status" style="color:var(--critico)"><span class="ponto vermelho"></span> Crítico</span>
                             </div>
-                            <div class="barra-fundo"><div class="barra barra-estavel"></div></div>
+                            <div class="barra-fundo"><div class="barra barra-critica"></div></div>
                         </article>
                     </div>
 
                     <p class="estoque-nota">
-                        <strong>Atualização informada:</strong> 22/10/2026 às 11:07.
+                        <strong>Atualização informada:</strong> 09/11/2026 às 08:40.
                         <br>
                         Demonstração acadêmica. As barras são ilustrativas e não
                         representam quantidades ou percentuais reais de bolsas.
@@ -1156,6 +1274,39 @@
                 </div>
             </section>
 
+            <!-- SERVIÇOS INTERNOS -->
+            <section class="secao">
+                <div class="secao-cabecalho">
+                    <div>
+                        <h2>Mais serviços</h2>
+                        <p class="subtitulo">Encontre informações para dar o próximo passo.</p>
+                    </div>
+                </div>
+
+                <div class="servicos-grade">
+                    <a href="#" onclick="mostrarPagina('locais'); return false;" class="cartao servico">
+                        <span class="servico-icone">📍</span>
+                        <span>
+                            <h3>Encontrar locais de doação</h3>
+                            <p>Consulte informações sobre os locais de doação.</p>
+                        </span>
+                        <span class="servico-seta">›</span>
+                    </a>
+
+                    <a href="#" onclick="mostrarPagina('agendar'); return false;" class="cartao servico">
+                        <span class="servico-icone">📅</span>
+                        <span>
+                            <h3>Agendar doação</h3>
+                            <p>Acesse a área demonstrativa de agendamentos.</p>
+                        </span>
+                        <span class="servico-seta">›</span>
+                    </a>
+                </div>
+
+                <p class="estoque-nota">
+                    Os serviços são demonstrativos. O protótipo não realiza agendamentos reais.
+                </p>
+            </section>
             <!-- NOTÍCIAS -->
             <section class="secao" id="secaoNoticias">
                 <div class="secao-cabecalho">
@@ -1256,39 +1407,6 @@
                 </article>
             </section>
 
-            <!-- SERVIÇOS INTERNOS -->
-            <section class="secao">
-                <div class="secao-cabecalho">
-                    <div>
-                        <h2>Mais serviços</h2>
-                        <p class="subtitulo">Encontre informações para dar o próximo passo.</p>
-                    </div>
-                </div>
-
-                <div class="servicos-grade">
-                    <a href="#" onclick="mostrarPagina('locais'); return false;" class="cartao servico">
-                        <span class="servico-icone">📍</span>
-                        <span>
-                            <h3>Encontrar locais de doação</h3>
-                            <p>Consulte informações sobre os locais de doação.</p>
-                        </span>
-                        <span class="servico-seta">›</span>
-                    </a>
-
-                    <a href="#" onclick="mostrarPagina('agendar'); return false;" class="cartao servico">
-                        <span class="servico-icone">📅</span>
-                        <span>
-                            <h3>Agendar doação</h3>
-                            <p>Acesse a área demonstrativa de agendamentos.</p>
-                        </span>
-                        <span class="servico-seta">›</span>
-                    </a>
-                </div>
-
-                <p class="estoque-nota">
-                    Os serviços são demonstrativos. O protótipo não realiza agendamentos reais.
-                </p>
-            </section>
         </main>
 
         <!-- DETALHES DA CAMPANHA -->
@@ -1611,6 +1729,7 @@
                 <h1>Agendamento de doação</h1>
                 <p>Preencha os dados abaixo para registrar um agendamento demonstrativo.</p>
                 <p class="aviso-demo">Atenção: este formulário é apenas uma simulação acadêmica. Ele não agenda uma doação real junto à HEMOBA.</p>
+                <p id="avisoRegraGenero" class="mensagem" role="status"></p>
 
                 <form id="formAgendamento">
                     <label for="agendamentoUnidade">Unidade de doação</label>
@@ -1651,10 +1770,11 @@
             <article class="cartao pagina-cartao">
                 <h1>Meus agendamentos</h1>
                 <p>Consulte aqui o histórico dos seus agendamentos demonstrativos.</p>
+                <div id="mensagemReagendamento" class="mensagem oculto" role="status"></div>
                 <div id="listaAgendamentos">
                     <p class="subtitulo">Você ainda não registrou agendamentos nesta demonstração.</p>
                 </div>
-                <button type="button" class="botao" onclick="mostrarPagina('agendar')">📅 Agendar doação</button>
+                <button type="button" id="botaoNovoAgendamento" class="botao" onclick="mostrarPagina('agendar')">📅 Agendar doação</button>
             </article>
         </main>
 
@@ -1855,7 +1975,153 @@
         }
 
         function normalizarCPF(cpf) {
-            return cpf.replace(/\D/g, "");
+            return String(cpf || "").replace(/\D/g, "").slice(0, 11);
+        }
+
+        function formatarCPF(valor) {
+            const numeros = normalizarCPF(valor);
+            return numeros
+                .replace(/^(\d{3})(\d)/, "$1.$2")
+                .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+                .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        }
+
+        function aplicarMascaraCPF(elemento) {
+            if (!elemento) return;
+            elemento.addEventListener("input", function() {
+                const inicio = elemento.selectionStart;
+                const antes = elemento.value;
+                elemento.value = formatarCPF(antes);
+                const posicao = Math.min(elemento.value.length, inicio + (elemento.value.length - antes.length));
+                try { elemento.setSelectionRange(posicao, posicao); } catch (erro) {}
+            });
+        }
+
+        aplicarMascaraCPF(document.getElementById("cpf"));
+        aplicarMascaraCPF(document.getElementById("cpfCadastro"));
+
+        function senhaAtendeRequisitos(senha) {
+            return senha.length >= 8 &&
+                /[A-Z]/.test(senha) &&
+                /[a-z]/.test(senha) &&
+                /\d/.test(senha) &&
+                /[^A-Za-z0-9]/.test(senha);
+        }
+
+        function atualizarRequisitosSenha(inputId, boxId) {
+            const senha = document.getElementById(inputId).value;
+            const caixa = document.getElementById(boxId);
+            if (!caixa) return;
+            const regras = {
+                tamanho: senha.length >= 8,
+                maiuscula: /[A-Z]/.test(senha),
+                minuscula: /[a-z]/.test(senha),
+                numero: /\d/.test(senha),
+                especial: /[^A-Za-z0-9]/.test(senha)
+            };
+            Object.keys(regras).forEach(function(regra) {
+                const item = caixa.querySelector('[data-regra="' + regra + '"]');
+                if (item) item.classList.toggle("ok", regras[regra]);
+            });
+        }
+
+        function categoriaAvaliacaoInstituicao() {
+            return !!usuarioAtual && !["Feminino", "Masculino"].includes(usuarioAtual.genero);
+        }
+
+        function obterDoacoesConcluidas() {
+            if (!usuarioAtual || !Array.isArray(usuarioAtual.agendamentos)) return [];
+            return usuarioAtual.agendamentos.filter(function(item) {
+                return obterStatusAgendamento(item) === "concluido";
+            }).sort(function(a, b) {
+                return new Date(a.data + "T00:00:00") - new Date(b.data + "T00:00:00");
+            });
+        }
+
+        function hojeISO() {
+            const hoje = new Date();
+            return hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0") + "-" + String(hoje.getDate()).padStart(2, "0");
+        }
+
+        function adicionarDiasISO(dataISO, dias) {
+            const data = new Date(dataISO + "T00:00:00");
+            data.setDate(data.getDate() + dias);
+            return data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0") + "-" + String(data.getDate()).padStart(2, "0");
+        }
+
+        function verificarRegraAgendamento(dataEscolhida, idIgnorado) {
+            if (!usuarioAtual) return { permitido: false, mensagem: "Entre na sua conta para continuar." };
+
+            const futuros = (usuarioAtual.agendamentos || []).filter(function(item) {
+                return Number(item.id) !== Number(idIgnorado) && obterStatusAgendamento(item) === "futuro";
+            });
+            if (futuros.length) {
+                return { permitido: false, mensagem: "Você já possui um agendamento futuro. Cancele ou remarque o registro atual antes de criar outro." };
+            }
+
+            const concluidos = obterDoacoesConcluidas();
+            if (categoriaAvaliacaoInstituicao()) {
+                if (concluidos.length) {
+                    return { permitido: false, mensagem: "Após uma doação concluída, o próximo agendamento desta categoria deverá ser realizado exclusivamente pela própria instituição. Entre em contato com os canais oficiais da HEMOBA." };
+                }
+                return { permitido: true, mensagem: "" };
+            }
+
+            const feminino = usuarioAtual.genero === "Feminino";
+            const intervalo = feminino ? 90 : 60;
+            const limite = feminino ? 3 : 4;
+            const dataAlvo = new Date(dataEscolhida + "T00:00:00");
+            const doacoesNoPeriodo = concluidos.filter(function(item) {
+                const dataDoacao = new Date(item.data + "T00:00:00");
+                const diferenca = dataAlvo - dataDoacao;
+                return diferenca >= 0 && diferenca < 365 * 24 * 60 * 60 * 1000;
+            });
+
+            if (doacoesNoPeriodo.length >= limite) {
+                return { permitido: false, mensagem: "O limite demonstrativo de " + limite + " doações em 12 meses para esta categoria foi atingido." };
+            }
+
+            if (concluidos.length) {
+                const ultima = concluidos[concluidos.length - 1];
+                const dataMinima = adicionarDiasISO(ultima.data, intervalo);
+                if (dataEscolhida < dataMinima) {
+                    return { permitido: false, mensagem: "Para esta categoria, é necessário respeitar o intervalo mínimo de " + intervalo + " dias após a última doação concluída. Próxima data disponível na demonstração: " + formatarData(dataMinima) + "." };
+                }
+            }
+            return { permitido: true, mensagem: "" };
+        }
+
+        function atualizarAvisoRegraAgendamento() {
+            const aviso = document.getElementById("avisoRegraGenero");
+            const formulario = document.getElementById("formAgendamento");
+            if (!aviso || !usuarioAtual) return;
+            const concluidos = obterDoacoesConcluidas();
+            const bloqueioInstitucional = categoriaAvaliacaoInstituicao() && concluidos.length > 0;
+            if (bloqueioInstitucional) {
+                aviso.textContent = "Sua doação anterior consta como concluída. O próximo agendamento deverá ser realizado exclusivamente pela própria instituição. Entre em contato com os canais oficiais da HEMOBA.";
+                aviso.classList.remove("oculto");
+                if (formulario) formulario.classList.add("oculto");
+                return;
+            }
+            if (formulario) formulario.classList.remove("oculto");
+            if (categoriaAvaliacaoInstituicao()) {
+                aviso.textContent = "Para esta categoria, o primeiro agendamento demonstrativo pode ser solicitado normalmente. Após a doação ser concluída, o próximo agendamento será realizado somente pela instituição.";
+            } else {
+                const feminino = usuarioAtual.genero === "Feminino";
+                const intervalo = feminino ? 90 : 60;
+                aviso.textContent = "Regra demonstrativa para " + (feminino ? "feminino" : "masculino") + ": intervalo mínimo de " + intervalo + " dias e máximo de " + (feminino ? "3" : "4") + " doações em 12 meses.";
+                const campoData = document.getElementById("agendamentoData");
+                if (campoData) {
+                    let dataMinima = hojeISO();
+                    if (concluidos.length) {
+                        const ultima = concluidos[concluidos.length - 1];
+                        const intervaloMinimo = adicionarDiasISO(ultima.data, intervalo);
+                        if (intervaloMinimo > dataMinima) dataMinima = intervaloMinimo;
+                    }
+                    campoData.min = dataMinima;
+                }
+            }
+            aviso.classList.remove("oculto");
         }
 
         function normalizarNome(nome) {
@@ -1863,7 +2129,9 @@
         }
 
         function mostrarCadastro() {
-            document.getElementById("login").classList.add("oculto");
+            ["login", "recuperacaoTelefone", "recuperacaoCodigo", "recuperacaoNovaSenha"].forEach(function(id) {
+                document.getElementById(id).classList.add("oculto");
+            });
             document.getElementById("cadastro").classList.remove("oculto");
             limparMensagem("mensagemLogin");
             limparMensagem("mensagemCadastro");
@@ -1871,7 +2139,9 @@
         }
 
         function voltarLogin() {
-            document.getElementById("cadastro").classList.add("oculto");
+            ["cadastro", "recuperacaoTelefone", "recuperacaoCodigo", "recuperacaoNovaSenha"].forEach(function(id) {
+                document.getElementById(id).classList.add("oculto");
+            });
             document.getElementById("login").classList.remove("oculto");
             limparMensagem("mensagemCadastro");
             window.scrollTo(0, 0);
@@ -1915,15 +2185,10 @@
                 return;
             }
 
-            if (senha.length < 8) {
-                mostrarMensagem("mensagemCadastro", "A senha deve ter pelo menos 8 caracteres.");
-                return;
-            }
-
-            if (!/[A-Z]/.test(senha) || !/[a-z]/.test(senha) || !/[^A-Za-z0-9]/.test(senha)) {
+            if (!senhaAtendeRequisitos(senha)) {
                 mostrarMensagem(
                     "mensagemCadastro",
-                    "A senha precisa ter pelo menos uma letra maiúscula, uma minúscula e um caractere especial."
+                    "A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, uma minúscula, um número e um caractere especial."
                 );
                 return;
             }
@@ -1971,13 +2236,129 @@
             }
 
             document.getElementById("formCadastro").reset();
-            document.getElementById("cpf").value = cpfDigitado;
+            document.getElementById("cpf").value = formatarCPF(cpf);
+            document.getElementById("senha").value = "";
 
             voltarLogin();
             mostrarMensagem(
                 "mensagemLogin",
                 "Cadastro demonstrativo concluído! Entre com o CPF e a senha que você cadastrou."
             );
+        });
+
+        // RECUPERAÇÃO DE SENHA — fluxo totalmente fictício, sem envio de mensagens.
+        let telefoneContaRecuperacao = "";
+        let metodoRecuperacao = "";
+
+        function mostrarRecuperacaoSenha() {
+            ["login", "cadastro", "recuperacaoTelefone", "recuperacaoCodigo", "recuperacaoNovaSenha"].forEach(function(id) {
+                document.getElementById(id).classList.add("oculto");
+            });
+            document.getElementById("recuperacaoTelefone").classList.remove("oculto");
+            limparMensagem("mensagemTelefoneRecuperacao");
+            limparMensagem("mensagemCodigoRecuperacao");
+            limparMensagem("mensagemNovaSenhaRecuperacao");
+            window.scrollTo(0, 0);
+        }
+
+        function voltarParaLoginRecuperacao() {
+            ["cadastro", "recuperacaoTelefone", "recuperacaoCodigo", "recuperacaoNovaSenha"].forEach(function(id) {
+                document.getElementById(id).classList.add("oculto");
+            });
+            document.getElementById("login").classList.remove("oculto");
+            limparMensagem("mensagemLogin");
+            document.getElementById("senha").value = "";
+            window.scrollTo(0, 0);
+        }
+
+        function solicitarCodigoRecuperacao(metodo) {
+            limparMensagem("mensagemTelefoneRecuperacao");
+            const telefone = document.getElementById("telefoneRecuperacao").value.replace(/\D/g, "");
+            if (telefone.length < 10) {
+                mostrarMensagem("mensagemTelefoneRecuperacao", "Digite um telefone fictício com DDD.");
+                return;
+            }
+            const conta = obterUsuarios().find(function(usuario) {
+                return String(usuario.telefone || "").replace(/\D/g, "") === telefone;
+            });
+            if (!conta) {
+                mostrarMensagem("mensagemTelefoneRecuperacao", "Não encontramos uma conta demonstrativa com esse telefone. Confira o número cadastrado.");
+                return;
+            }
+            telefoneContaRecuperacao = telefone;
+            metodoRecuperacao = metodo;
+            document.getElementById("textoMetodoCodigo").textContent = "Simulação de código por " + metodo + " para o telefone informado.";
+            document.querySelectorAll(".codigo-digito").forEach(function(campo) { campo.value = ""; });
+            ["login", "cadastro", "recuperacaoTelefone", "recuperacaoCodigo", "recuperacaoNovaSenha"].forEach(function(id) {
+                document.getElementById(id).classList.add("oculto");
+            });
+            document.getElementById("recuperacaoCodigo").classList.remove("oculto");
+            document.querySelector(".codigo-digito").focus();
+            window.scrollTo(0, 0);
+        }
+
+        document.querySelectorAll(".codigo-digito").forEach(function(campo, indice, campos) {
+            campo.addEventListener("input", function() {
+                campo.value = campo.value.replace(/\D/g, "").slice(-1);
+                if (campo.value && campos[indice + 1]) campos[indice + 1].focus();
+            });
+            campo.addEventListener("keydown", function(evento) {
+                if (evento.key === "Backspace" && !campo.value && campos[indice - 1]) campos[indice - 1].focus();
+            });
+        });
+
+        document.getElementById("formCodigoRecuperacao").addEventListener("submit", function(evento) {
+            evento.preventDefault();
+            limparMensagem("mensagemCodigoRecuperacao");
+            const codigo = Array.from(document.querySelectorAll(".codigo-digito")).map(function(campo) { return campo.value; }).join("");
+            if (!/^\d{6}$/.test(codigo)) {
+                mostrarMensagem("mensagemCodigoRecuperacao", "Digite os seis números fictícios para continuar.");
+                return;
+            }
+            ["login", "cadastro", "recuperacaoTelefone", "recuperacaoCodigo", "recuperacaoNovaSenha"].forEach(function(id) {
+                document.getElementById(id).classList.add("oculto");
+            });
+            document.getElementById("recuperacaoNovaSenha").classList.remove("oculto");
+            window.scrollTo(0, 0);
+        });
+
+        document.getElementById("formNovaSenhaRecuperacao").addEventListener("submit", function(evento) {
+            evento.preventDefault();
+            limparMensagem("mensagemNovaSenhaRecuperacao");
+            const senha = document.getElementById("novaSenhaRecuperacao").value;
+            const confirmar = document.getElementById("confirmarNovaSenhaRecuperacao").value;
+            if (!senhaAtendeRequisitos(senha)) {
+                mostrarMensagem("mensagemNovaSenhaRecuperacao", "A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, uma minúscula, um número e um caractere especial.");
+                return;
+            }
+            if (senha !== confirmar) {
+                mostrarMensagem("mensagemNovaSenhaRecuperacao", "As senhas não coincidem. Confira e tente novamente.");
+                return;
+            }
+            const usuarios = obterUsuarios();
+            const indice = usuarios.findIndex(function(usuario) {
+                return String(usuario.telefone || "").replace(/\D/g, "") === telefoneContaRecuperacao;
+            });
+            if (indice === -1) {
+                mostrarMensagem("mensagemNovaSenhaRecuperacao", "Não foi possível localizar a conta para atualizar a senha.");
+                return;
+            }
+            usuarios[indice].senha = senha;
+            if (!salvarUsuarios(usuarios)) return;
+            const cpfAtualizado = usuarios[indice].cpf;
+            document.getElementById("formNovaSenhaRecuperacao").reset();
+            voltarParaLoginRecuperacao();
+            document.getElementById("cpf").value = formatarCPF(cpfAtualizado);
+            mostrarMensagem("mensagemLogin", "Senha alterada com sucesso! Entre com seu CPF e a nova senha.");
+            telefoneContaRecuperacao = "";
+            metodoRecuperacao = "";
+        });
+
+        document.getElementById("senhaCadastro").addEventListener("input", function() {
+            atualizarRequisitosSenha("senhaCadastro", "requisitosCadastro");
+        });
+        document.getElementById("novaSenhaRecuperacao").addEventListener("input", function() {
+            atualizarRequisitosSenha("novaSenhaRecuperacao", "requisitosRecuperacao");
         });
 
         // LOGIN
@@ -2032,7 +2413,7 @@
                 usuarioAtual.nome || "";
 
             document.getElementById("perfilCpfInput").value =
-                usuarioAtual.cpf || "";
+                formatarCPF(usuarioAtual.cpf || "");
 
             document.getElementById("perfilNascimento").value =
                 usuarioAtual.nascimento || "";
@@ -2104,7 +2485,7 @@
         });
 
         // AGENDAMENTO DEMONSTRATIVO: histórico e notificações ficam salvos neste navegador.
-        document.getElementById("agendamentoData").min = new Date().toISOString().slice(0, 10);
+        document.getElementById("agendamentoData").min = hojeISO();
 
         document.getElementById("formAgendamento").addEventListener("submit", function(evento) {
             evento.preventDefault();
@@ -2132,6 +2513,13 @@
                 return;
             }
 
+            const regra = verificarRegraAgendamento(data, null);
+            if (!regra.permitido) {
+                mostrarMensagem("mensagemAgendamento", regra.mensagem);
+                atualizarAvisoRegraAgendamento();
+                return;
+            }
+
             if (!Array.isArray(usuarioAtual.agendamentos)) usuarioAtual.agendamentos = [];
             if (!Array.isArray(usuarioAtual.notificacoes)) usuarioAtual.notificacoes = [];
 
@@ -2154,10 +2542,9 @@
             if (!persistirUsuarioAtual()) return;
 
             document.getElementById("formAgendamento").reset();
-            document.getElementById("agendamentoData").min = new Date().toISOString().slice(0, 10);
+            document.getElementById("agendamentoData").min = hojeISO();
             atualizarAgendamentos();
             atualizarNotificacoes();
-            // Depois de agendar, leva a pessoa à página Meus Agendamentos.
             mostrarPagina("agendamentos");
         });
 
@@ -2199,8 +2586,16 @@
                 })
                 : [];
 
+            const concluidosAntes = obterDoacoesConcluidas();
+            const bloqueioInstitucional = categoriaAvaliacaoInstituicao() && concluidosAntes.length > 0;
+            const botaoNovo = document.getElementById("botaoNovoAgendamento");
+            if (botaoNovo) botaoNovo.classList.toggle("oculto", bloqueioInstitucional);
+
             if (!agendamentos.length) {
                 lista.innerHTML = '<p class="subtitulo">Você ainda não registrou agendamentos nesta demonstração.</p>';
+                if (bloqueioInstitucional) {
+                    lista.innerHTML += '<p class="mensagem">O próximo agendamento deverá ser realizado exclusivamente pela própria instituição.</p>';
+                }
                 return;
             }
 
@@ -2217,6 +2612,7 @@
             function cartaoAgendamento(item, status) {
                 const id = Number(item.id);
                 const idDetalhes = "detalhesAgendamento" + id;
+                const idRemarcacao = "painelRemarcacao" + id;
                 const nomeUnidade = escaparHTML(item.unidade);
                 const dataFormatada = escaparHTML(formatarData(item.data));
                 const horario = escaparHTML(item.horario);
@@ -2234,15 +2630,31 @@
                 const etiqueta = status === "concluido"
                     ? '<p><strong style="color:var(--verde)">✓ Concluído</strong></p>'
                     : '<p><strong style="color:var(--amarelo)">◷ Próximo agendamento</strong></p>';
-                const botoes = status === "futuro"
-                    ? '<div class="linha-botoes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">' +
-                        '<button type="button" class="botao botao-secundario" onclick="alternarDetalhesAgendamento(' + id + ')">Ver detalhes</button>' +
-                        '<a class="botao botao-secundario" href="' + escaparHTML(linkLocalAgendamento(item.unidade)) + '" target="_blank" rel="noopener noreferrer">📍 Ver localização ↗</a>' +
-                        '<button type="button" class="botao botao-secundario" onclick="cancelarAgendamento(' + id + ')">Cancelar agendamento</button>' +
-                      '</div>'
-                    : '<div class="linha-botoes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">' +
-                        '<button type="button" class="botao botao-secundario" onclick="alternarDetalhesAgendamento(' + id + ')">Ver detalhes</button>' +
-                      '</div>';
+                let botoes = '<div class="linha-botoes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">' +
+                    '<button type="button" class="botao botao-secundario" onclick="alternarDetalhesAgendamento(' + id + ')">Ver detalhes</button>';
+                if (status === "futuro") {
+                    botoes += '<a class="botao botao-secundario" href="' + escaparHTML(linkLocalAgendamento(item.unidade)) + '" target="_blank" rel="noopener noreferrer">📍 Ver localização ↗</a>' +
+                        '<button type="button" class="botao botao-secundario" onclick="abrirRemarcacao(' + id + ')">Remarcar</button>' +
+                        '<button type="button" class="botao botao-secundario" onclick="cancelarAgendamento(' + id + ')">Cancelar agendamento</button>';
+                }
+                botoes += '</div>';
+
+                const painel = status === "futuro"
+                    ? '<form id="' + idRemarcacao + '" class="painel-remarcacao oculto" onsubmit="confirmarRemarcacao(event,' + id + ')">' +
+                        '<strong>Escolha a nova data e o novo horário</strong>' +
+                        '<label for="novaData' + id + '">Nova data</label>' +
+                        '<input type="date" id="novaData' + id + '" min="' + hojeISO() + '" value="' + escaparHTML(item.data) + '" required>' +
+                        '<label for="novoHorario' + id + '">Novo horário</label>' +
+                        '<select id="novoHorario' + id + '" required>' +
+                            '<option value="">Selecione um horário</option>' +
+                            ["08:00","09:00","10:00","11:00","13:00","14:00","15:00"].map(function(h) {
+                                return '<option value="' + h + '"' + (h === item.horario ? ' selected' : '') + '>' + h + '</option>';
+                            }).join("") +
+                        '</select>' +
+                        '<button type="submit" class="botao">Confirmar reagendamento</button>' +
+                        '<button type="button" class="botao botao-secundario" onclick="fecharRemarcacao(' + id + ')">Voltar</button>' +
+                      '</form>'
+                    : '';
 
                 return '<article class="item-agendamento">' +
                     etiqueta +
@@ -2255,21 +2667,73 @@
                         '<p>Data pretendida: ' + dataFormatada + '</p>' +
                         '<p>Horário pretendido: ' + horario + '</p>' +
                         '<p class="subtitulo">Registro demonstrativo. Não representa confirmação de agendamento pela HEMOBA.</p>' +
-                    '</div>' + botoes +
+                    '</div>' + botoes + painel +
                     '</article>';
             }
 
-            let html = '';
-            html += '<section class="secao"><div class="secao-agendamentos-titulo"><h2>Próximos agendamentos</h2><span class="contador-status contador-futuro">' + futuros.length + '</span></div>';
-            html += futuros.length ? futuros.map(function(item) { return cartaoAgendamento(item, "futuro"); }).join("") : '<p class="subtitulo">Você não tem próximos agendamentos.</p>';
-            html += '</section>';
-            html += '<section class="secao"><div class="secao-agendamentos-titulo"><h2>Concluídos</h2><span class="contador-status contador-concluido">' + concluidos.length + '</span></div>';
-            html += concluidos.length ? concluidos.map(function(item) { return cartaoAgendamento(item, "concluido"); }).join("") : '<p class="subtitulo">Nenhum agendamento concluído ainda.</p>';
-            html += '</section>';
-            html += '<section class="secao"><div class="secao-agendamentos-titulo"><h2>Cancelados</h2><span class="contador-status contador-cancelado">' + cancelados.length + '</span></div>';
-            html += cancelados.length ? cancelados.map(function(item) { return cartaoAgendamento(item, "cancelado"); }).join("") : '<p class="subtitulo">Nenhum agendamento cancelado.</p>';
-            html += '</section>';
-            lista.innerHTML = html;
+            let conteudo = '';
+            conteudo += '<section class="secao"><div class="secao-agendamentos-titulo"><h2>Próximos agendamentos</h2><span class="contador-status contador-futuro">' + futuros.length + '</span></div>';
+            conteudo += futuros.length ? futuros.map(function(item) { return cartaoAgendamento(item, "futuro"); }).join("") : '<p class="subtitulo">Você não tem próximos agendamentos.</p>';
+            conteudo += '</section>';
+            conteudo += '<section class="secao"><div class="secao-agendamentos-titulo"><h2>Concluídos</h2><span class="contador-status contador-concluido">' + concluidos.length + '</span></div>';
+            conteudo += concluidos.length ? concluidos.map(function(item) { return cartaoAgendamento(item, "concluido"); }).join("") : '<p class="subtitulo">Nenhum agendamento concluído ainda.</p>';
+            if (bloqueioInstitucional) {
+                conteudo += '<p class="mensagem">Sua doação consta como concluída. O próximo agendamento deverá ser realizado exclusivamente pela própria instituição, mediante avaliação e orientação dos canais oficiais da HEMOBA.</p>';
+            }
+            conteudo += '</section>';
+            conteudo += '<section class="secao"><div class="secao-agendamentos-titulo"><h2>Cancelados</h2><span class="contador-status contador-cancelado">' + cancelados.length + '</span></div>';
+            conteudo += cancelados.length ? cancelados.map(function(item) { return cartaoAgendamento(item, "cancelado"); }).join("") : '<p class="subtitulo">Nenhum agendamento cancelado.</p>';
+            conteudo += '</section>';
+            lista.innerHTML = conteudo;
+        }
+
+        function abrirRemarcacao(id) {
+            const painel = document.getElementById("painelRemarcacao" + Number(id));
+            if (painel) painel.classList.remove("oculto");
+        }
+
+        function fecharRemarcacao(id) {
+            const painel = document.getElementById("painelRemarcacao" + Number(id));
+            if (painel) painel.classList.add("oculto");
+        }
+
+        function confirmarRemarcacao(evento, id) {
+            evento.preventDefault();
+            if (!usuarioAtual || !Array.isArray(usuarioAtual.agendamentos)) return;
+            const item = usuarioAtual.agendamentos.find(function(a) { return Number(a.id) === Number(id); });
+            if (!item || obterStatusAgendamento(item) !== "futuro") return;
+
+            const data = document.getElementById("novaData" + Number(id)).value;
+            const horario = document.getElementById("novoHorario" + Number(id)).value;
+            if (!data || !horario) return;
+
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            if (new Date(data + "T00:00:00") < hoje) {
+                alert("Escolha uma data de hoje em diante.");
+                return;
+            }
+            const regra = verificarRegraAgendamento(data, id);
+            if (!regra.permitido) {
+                alert(regra.mensagem);
+                return;
+            }
+
+            const dataAnterior = item.data;
+            const horarioAnterior = item.horario;
+            item.data = data;
+            item.horario = horario;
+            item.remarcadoEm = new Date().toISOString();
+            registrarNotificacao(
+                "Reagendamento concluído",
+                "Seu agendamento foi alterado de " + formatarData(dataAnterior) + " às " + horarioAnterior + " para " + formatarData(data) + " às " + horario + ". A atualização foi salva no DOA+.",
+                "reagendamento",
+                item.id
+            );
+            if (!persistirUsuarioAtual()) return;
+            atualizarAgendamentos();
+            atualizarNotificacoes();
+            mostrarMensagem("mensagemReagendamento", "Reagendamento concluído! A nova data e o novo horário já foram atualizados em Meus agendamentos. ❤️");
         }
 
         function alternarDetalhesAgendamento(id) {
@@ -2475,6 +2939,7 @@
                 }
             }
             if (nomePagina === "agendamentos") atualizarAgendamentos();
+            if (nomePagina === "agendar") atualizarAvisoRegraAgendamento();
             if (nomePagina === "notificacoes") atualizarNotificacoes();
             Object.values(paginas).forEach(function(id) {
                 document.getElementById(id).classList.add("oculto");
