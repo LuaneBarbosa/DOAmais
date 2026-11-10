@@ -432,6 +432,34 @@
         .servico p { margin:0; color:var(--texto-suave); font-size:13px; line-height:1.5; }
         .servico-seta { margin-left:auto; color:var(--vermelho); font-size:23px; }
 
+        /* Destaque do agendamento na Home */
+        .servico-agendamento {
+            background:var(--vermelho);
+            border-color:var(--vermelho);
+            color:#fff;
+        }
+        .servico-agendamento h3,
+        .servico-agendamento p,
+        .servico-agendamento .servico-seta { color:#fff; }
+        .servico-agendamento .servico-icone {
+            background:rgba(255,255,255,.16);
+            color:#fff;
+        }
+        .servico-agendamento:hover {
+            background:var(--vermelho-escuro);
+            border-color:var(--vermelho-escuro);
+            box-shadow:0 8px 22px rgba(181,18,43,.18);
+        }
+        html[data-tema="escuro"] .servico-agendamento {
+            background:#d93650;
+            border-color:#d93650;
+            color:#fff;
+        }
+        html[data-tema="escuro"] .servico-agendamento:hover {
+            background:#c92d47;
+            border-color:#c92d47;
+        }
+
         /* Páginas internas */
 
         .pagina-interna {
@@ -1293,7 +1321,7 @@
                         <span class="servico-seta">›</span>
                     </a>
 
-                    <a href="#" onclick="mostrarPagina('agendar'); return false;" class="cartao servico">
+                    <a href="#" onclick="mostrarPagina('agendar'); return false;" class="cartao servico servico-agendamento">
                         <span class="servico-icone">📅</span>
                         <span>
                             <h3>Agendar doação</h3>
